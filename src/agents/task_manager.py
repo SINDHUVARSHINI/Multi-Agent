@@ -29,12 +29,25 @@ class TaskManagerAgent(BaseAgent):
             results = await asyncio.wait_for(asyncio.gather(*tasks), timeout=timeout)
             print("  ✓ All agents completed successfully")
             
-            # Combine results
+            # Combine results with better error handling
             combined_results = {
                 "status": "completed",
-                "research_results": results[0] if len(results) > 0 else {},
-                "plan": results[1] if len(results) > 1 else {}
+                "research_results": {},
+                "plan": {}
             }
+            
+            for result in results:
+                if isinstance(result, dict):
+                    if "research_query" in result:
+                        combined_results["research_results"] = result
+                    elif "plan" in result:
+                        combined_results["plan"] = result.get("plan", {})
+            
+            # Validate results
+            if not combined_results["research_results"]:
+                print("  ⚠️ Warning: No research results available")
+            if not combined_results["plan"]:
+                print("  ⚠️ Warning: No planning results available")
             
             self.update_state(status="idle", current_task=None)
             return combined_results

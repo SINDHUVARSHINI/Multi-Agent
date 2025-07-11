@@ -25,19 +25,40 @@ class PlanningAgent(BaseAgent):
             deadline = task.get("deadline", "not specified")
             
             # Create planning prompt
-            planning_prompt = f"""You are a project planning expert. Please create a detailed implementation plan for the following task:
+            planning_prompt = f"""You are a technical project planning expert. Create a detailed implementation plan for the following task:
 
 Task Description: {description}
 Priority: {priority}
 Deadline: {deadline}
 
-Please provide:
-1. A breakdown of implementation steps
-2. Resource requirements
-3. Timeline estimates
-4. Risk considerations
+Please provide a comprehensive implementation plan that includes:
 
-Format the response in a clear, structured way."""
+1. Technical Requirements:
+   - Required technologies and dependencies
+   - API specifications
+   - Development environment setup
+
+2. Implementation Steps:
+   - Step-by-step breakdown of development tasks
+   - Integration points and considerations
+   - Testing requirements for each step
+
+3. Timeline and Milestones:
+   - Estimated duration for each step
+   - Critical path identification
+   - Key milestones and deliverables
+
+4. Quality Assurance:
+   - Testing strategy
+   - Performance benchmarks
+   - Error handling considerations
+
+5. Risk Assessment:
+   - Potential technical challenges
+   - Mitigation strategies
+   - Fallback options
+
+Format the response in a clear, structured way with markdown formatting. Use bullet points and numbered lists for clarity."""
             
             # Generate plan
             messages = [HumanMessage(content=planning_prompt)]
@@ -60,8 +81,13 @@ Format the response in a clear, structured way."""
             
     def _structure_plan(self, raw_plan: str) -> Dict[str, Any]:
         """Structure the raw plan into a formatted response"""
+        # Split the plan into sections and clean up
+        sections = raw_plan.split("\n")
+        cleaned_sections = [s.strip() for s in sections if s.strip()]
+        
         return {
-            "steps": raw_plan.split("\n"),
+            "steps": cleaned_sections,
             "generated_at": "now",
-            "confidence": 0.8
+            "confidence": 0.8,
+            "format_version": "2.0"
         } 

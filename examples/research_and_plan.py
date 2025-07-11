@@ -39,22 +39,36 @@ async def main():
         else:
             # Research findings
             print("\n📚 Research Findings:")
-            insights = result.get("research_results", {}).get("analysis", {}).get("key_insights", [])
-            for finding in insights:
-                if finding and finding.strip():
-                    print(f"  {finding.strip()}")
+            research_results = result.get("research_results", {})
+            if isinstance(research_results.get("analysis", {}).get("key_insights"), list):
+                insights = research_results.get("analysis", {}).get("key_insights", [])
+                for finding in insights:
+                    if finding and finding.strip():
+                        print(f"  {finding.strip()}")
+            elif isinstance(research_results.get("analysis"), str):
+                print(f"  {research_results.get('analysis')}")
             
             # Implementation plan
             print("\n📋 Implementation Plan:")
-            plan_steps = result.get("plan", {}).get("steps", [])
-            if isinstance(plan_steps, list):
-                for step in plan_steps:
-                    if step and step.strip():
-                        print(f"  • {step.strip()}")
-            elif isinstance(plan_steps, str):
-                for line in plan_steps.split('\n'):
-                    if line and line.strip():
-                        print(f"  • {line.strip()}")
+            plan = result.get("plan", {})
+            if not plan:
+                print("  ⚠️ No implementation plan available")
+            else:
+                steps = plan.get("steps", [])
+                if not steps:
+                    print("  ⚠️ No implementation steps available")
+                else:
+                    for step in steps:
+                        if step and step.strip():
+                            print(f"  • {step.strip()}")
+            
+            # Performance metrics
+            print("\n📊 Performance Metrics:")
+            print(f"  • Total processing time: {duration:.1f} seconds")
+            print(f"  • Research confidence: {research_results.get('analysis', {}).get('confidence_score', 'N/A')}")
+            if plan:
+                print(f"  • Planning confidence: {plan.get('confidence', 'N/A')}")
+                print(f"  • Plan format version: {plan.get('format_version', '1.0')}")
     
     except Exception as e:
         print(f"\nError processing task: {str(e)}")
