@@ -337,14 +337,3 @@ Key Advantages:
 - Dynamic task allocation
 - Confidence scoring system
 ```
-
-## Contributing
-
-We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
-
-## License
-
-MIT License - See [LICENSE](LICENSE) for details.
-
----
-*"Assembling AI Agents at the Speed of Groq!"*
