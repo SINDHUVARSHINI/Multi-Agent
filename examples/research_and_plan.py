@@ -8,7 +8,7 @@ async def main():
     print("=" * 50 + "\n")
 
     print("1. Setting up agent system...")
-    task_manager = await setup_agents()
+    agents = setup_agents()
     print("✓ Agents initialized\n")
 
     print("2. Submitting task to agent system...")
@@ -19,56 +19,75 @@ async def main():
         - Current temperature
         - Today's forecast
         - Basic weather conditions (sunny, rainy, etc.)
-        """,
-        "priority": "medium",
-        "deadline": "2024-12-31"
+        """
     }
     print("\nTask description:", task["description"])
     print("\nProcessing (this may take a minute)...")
     
     try:
         start_time = time.time()
-        result = await process_task(task_manager, task)
+        result = await process_task(task, agents)
         duration = time.time() - start_time
         
         print(f"\n3. Results (took {duration:.1f} seconds):")
-        print("-" * 30)
+        print("=" * 50)
         
         if result.get("status") == "error":
             print(f"❌ Task failed: {result.get('message')}")
+            if result.get("details"):
+                print("Details:", result["details"])
         else:
             # Research findings
-            print("\n📚 Research Findings:")
-            research_results = result.get("research_results", {})
-            if isinstance(research_results.get("analysis", {}).get("key_insights"), list):
-                insights = research_results.get("analysis", {}).get("key_insights", [])
-                for finding in insights:
-                    if finding and finding.strip():
-                        print(f"  {finding.strip()}")
-            elif isinstance(research_results.get("analysis"), str):
-                print(f"  {research_results.get('analysis')}")
+            print("\n📚 Research Findings")
+            print("-" * 30)
+            research_phase = result.get("research_phase", {})
+            analysis = research_phase.get("analysis", {})
+            
+            print("\n🎯 Executive Summary:")
+            print(analysis.get("summary", "No summary available"))
+            
+            print("\n📊 Detailed Analysis:")
+            print(analysis.get("detailed_analysis", "No analysis available"))
+            
+            print("\n💡 Recommendations:")
+            print(analysis.get("recommendations", "No recommendations available"))
+            
+            print("\n⚠️ Implementation Considerations:")
+            print(analysis.get("considerations", "No considerations available"))
             
             # Implementation plan
-            print("\n📋 Implementation Plan:")
-            plan = result.get("plan", {})
-            if not plan:
-                print("  ⚠️ No implementation plan available")
+            print("\n📋 Implementation Plan")
+            print("-" * 30)
+            planning_phase = result.get("planning_phase", {})
+            implementation_plan = planning_phase.get("implementation_plan", {})
+            
+            if implementation_plan:
+                print("\n📝 Step-by-Step Plan:")
+                print(implementation_plan.get("plan", "No plan available"))
+                
+                print("\n⚙️ Technical Specifications:")
+                tech_specs = implementation_plan.get("technical_specifications", {})
+                print(tech_specs.get("specifications", "No specifications available"))
+                
+                print("\n⏱️ Timeline:")
+                timeline = implementation_plan.get("timeline", {})
+                print(timeline.get("timeline", "No timeline available"))
+                
+                print("\n📦 Required Resources:")
+                print(implementation_plan.get("resources", "No resources specified"))
+                
+                print("\n🛡️ Risks and Mitigations:")
+                print(implementation_plan.get("risks_and_mitigations", "No risks specified"))
             else:
-                steps = plan.get("steps", [])
-                if not steps:
-                    print("  ⚠️ No implementation steps available")
-                else:
-                    for step in steps:
-                        if step and step.strip():
-                            print(f"  • {step.strip()}")
+                print("  ⚠️ No implementation plan available")
             
             # Performance metrics
-            print("\n📊 Performance Metrics:")
-            print(f"  • Total processing time: {duration:.1f} seconds")
-            print(f"  • Research confidence: {research_results.get('analysis', {}).get('confidence_score', 'N/A')}")
-            if plan:
-                print(f"  • Planning confidence: {plan.get('confidence', 'N/A')}")
-                print(f"  • Plan format version: {plan.get('format_version', '1.0')}")
+            print("\n📊 Performance Metrics")
+            print("-" * 30)
+            print(f"• Total processing time: {duration:.1f} seconds")
+            confidence_scores = result.get("confidence_scores", {})
+            print(f"• Research confidence: {confidence_scores.get('research', 'N/A')}")
+            print(f"• Planning confidence: {confidence_scores.get('planning', 'N/A')}")
     
     except Exception as e:
         print(f"\nError processing task: {str(e)}")

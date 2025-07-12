@@ -1,93 +1,121 @@
-from typing import Dict, Any, List
-from .base_agent import BaseAgent
-from langchain_google_genai import ChatGoogleGenerativeAI # type: ignore [import-untyped]
-from langchain.schema import HumanMessage, SystemMessage # type: ignore [import-untyped]
+from typing import Dict, Any
+from langchain_core.language_models.chat_models import BaseChatModel # type: ignore [reportUnknownParameterType]
 
-class PlanningAgent(BaseAgent):
-    """Agent responsible for creating execution plans"""
+class PlanningAgent:
+    """Agent responsible for creating implementation plans"""
     
-    def __init__(self, name: str = "PlanningAgent", google_api_key: str = None): # type: ignore
-        super().__init__(name)
-        self.llm = ChatGoogleGenerativeAI(
-            model="models/gemini-2.5-pro",
-            google_api_key=google_api_key,
-            temperature=0.7
-        )
-        
+    def __init__(self, llm: BaseChatModel):
+        self.llm = llm
+    
     async def process(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """Process a planning task"""
-        self.update_state(status="working", current_task=task)
-        
         try:
-            # Extract task details
+            print("\n📝 Planning Agent:")
+            print("- Reviewing research findings")
+            
+            # Extract task info and research results
             description = task.get("description", "")
-            priority = task.get("priority", "medium")
-            deadline = task.get("deadline", "not specified")
+            research_results = task.get("research_results", {})
+            if not description or not research_results:
+                raise ValueError("Task description and research results are required")
             
-            # Create planning prompt
-            planning_prompt = f"""You are a technical project planning expert. Create a detailed implementation plan for the following task:
-
-Task Description: {description}
-Priority: {priority}
-Deadline: {deadline}
-
-Please provide a comprehensive implementation plan that includes:
-
-1. Technical Requirements:
-   - Required technologies and dependencies
-   - API specifications
-   - Development environment setup
-
-2. Implementation Steps:
-   - Step-by-step breakdown of development tasks
-   - Integration points and considerations
-   - Testing requirements for each step
-
-3. Timeline and Milestones:
-   - Estimated duration for each step
-   - Critical path identification
-   - Key milestones and deliverables
-
-4. Quality Assurance:
-   - Testing strategy
-   - Performance benchmarks
-   - Error handling considerations
-
-5. Risk Assessment:
-   - Potential technical challenges
-   - Mitigation strategies
-   - Fallback options
-
-Format the response in a clear, structured way with markdown formatting. Use bullet points and numbered lists for clarity."""
+            print("- Creating implementation plan")
+            # Prepare the planning prompt
+            planning_prompt = f"""
+            Task: {description}
             
-            # Generate plan
-            messages = [HumanMessage(content=planning_prompt)]
-            response = await self.llm.agenerate([messages])
+            Research Summary: {research_results.get('summary', '')}
+            Detailed Analysis: {research_results.get('detailed_analysis', '')}
+            Recommendations: {research_results.get('recommendations', '')}
+            Implementation Considerations: {research_results.get('considerations', '')}
             
-            # Process and structure the response
-            plan = self._structure_plan(response.generations[0][0].text)
+            Based on the research findings above, create a detailed implementation plan.
+            Format your response using these exact section headers:
+
+            ## IMPLEMENTATION_PLAN:
+            [Provide a detailed, step-by-step implementation guide]
+
+            ## TECHNICAL_SPECIFICATIONS:
+            [List API endpoints, data structures, and technical requirements]
+
+            ## TIMELINE:
+            [Provide time estimates and milestones]
+
+            ## RESOURCES:
+            [List required tools and dependencies]
+
+            ## RISKS_AND_MITIGATIONS:
+            [List potential risks and mitigation strategies]
+
+            Make each section comprehensive and immediately actionable.
+            """
             
-            result = {
-                "status": "completed",
-                "plan": plan
+            print("- Generating technical specifications")
+            # Get plan from LLM
+            response = await self.llm.ainvoke(planning_prompt)
+            
+            print("- Estimating timeline")
+            # Parse sections from the response
+            sections = self._parse_sections(str(response.content))
+            
+            # Structure the results
+            implementation_plan = {
+                "plan": sections.get("IMPLEMENTATION_PLAN", "No implementation plan available"),
+                "technical_specifications": {
+                    "specifications": sections.get("TECHNICAL_SPECIFICATIONS", "No specifications available")
+                },
+                "timeline": {
+                    "timeline": sections.get("TIMELINE", "No timeline available")
+                },
+                "resources": sections.get("RESOURCES", "No resources specified"),
+                "risks_and_mitigations": sections.get("RISKS_AND_MITIGATIONS", "No risks specified")
             }
             
-            self.update_state(status="idle", current_task=None)
-            return result
+            print("✨ Planning complete")
+            return {
+                "status": "completed",
+                "implementation_plan": implementation_plan,
+                "confidence_scores": {
+                    "plan": 0.9  # Example confidence score
+                }
+            }
             
         except Exception as e:
-            self.update_state(status="error", current_task=None)
-            raise
-            
-    def _structure_plan(self, raw_plan: str) -> Dict[str, Any]:
-        """Structure the raw plan into a formatted response"""
-        # Split the plan into sections and clean up
-        sections = raw_plan.split("\n")
-        cleaned_sections = [s.strip() for s in sections if s.strip()]
-        
-        return {
-            "steps": cleaned_sections,
-            "generated_at": "now",
-            "confidence": 0.8,
-            "format_version": "2.0"
-        } 
+            print(f"❌ Planning failed: {str(e)}")
+            return {
+                "status": "error",
+                "message": str(e)
+            }
+
+    def _parse_sections(self, content: str) -> Dict[str, str]:
+        """Parse sections from the LLM response"""
+        sections = {}
+        current_section = None
+        current_content = []
+
+        # Initialize sections with default values
+        for section in [
+            "IMPLEMENTATION_PLAN",
+            "TECHNICAL_SPECIFICATIONS",
+            "TIMELINE",
+            "RESOURCES",
+            "RISKS_AND_MITIGATIONS"
+        ]:
+            sections[section] = "No content available"
+
+        for line in content.split('\n'):
+            line = line.strip()
+            if line.startswith('## ') and ':' in line:
+                section_name = line[3:].split(':')[0].strip()
+                if section_name in sections:
+                    if current_section:
+                        sections[current_section] = '\n'.join(current_content).strip()
+                    current_section = section_name
+                    current_content = []
+            elif current_section and line:
+                current_content.append(line)
+
+        if current_section and current_content:
+            sections[current_section] = '\n'.join(current_content).strip()
+
+        return sections 

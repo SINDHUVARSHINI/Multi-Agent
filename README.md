@@ -1,24 +1,26 @@
 # AssembleAI
 
-A powerful multi-agent AI system where specialized agents work together to solve complex problems efficiently. Because sometimes, one AI isn't enough.
+A powerful multi-agent AI system where specialized agents work together to solve complex problems efficiently. Leveraging Groq's ultra-fast inference capabilities for lightning-quick responses.
 
 ## Overview
 
-AssembleAI combines five specialized AI agents, each with a specific role in the problem-solving process. Like a well-coordinated team of experts, they work together to achieve what would be impossible alone.
+AssembleAI combines specialized AI agents, each with a specific role in the problem-solving process. Like a well-coordinated team of experts, they work together to achieve what would be impossible alone.
 
-- **Task Manager**: The director who coordinates everything 
-- **Research Agent**: The genius who gathers and analyzes information
+- **Task Manager**: The orchestrator who coordinates the entire workflow
+- **Research Agent**: The analyst who gathers and processes information
 - **Planning Agent**: The strategist who creates detailed execution plans
-- **Implementation Agent**: The powerhouse who executes planned tasks
-- **QA Agent**: The guardian who validates results and ensures quality
+- **Adaptive Learning Agent**: The learner who improves from experience
+- **Reflection Agent**: The evaluator who ensures continuous improvement
 
 ## Key Features
 
-- **Efficient Collaboration**: Agents work together seamlessly (no infinity stones needed)
-- **Smart Task Distribution**: Automatic task delegation based on agent specialties
-- **Quality Assurance**: Built-in validation at every step
-- **Fast Processing**: Complete tasks in 74-85 seconds (faster than a speeding bullet)
-- **Google Gemini Integration**: Powered by advanced AI capabilities
+- **Ultra-Fast Processing**: Powered by Groq's `llama-3.3-70b-versatile` model
+- **Efficient Collaboration**: Seamless coordination between specialized agents
+- **Smart Task Distribution**: Automatic task delegation based on agent expertise
+- **Adaptive Learning**: System improves from past experiences
+- **Reflection Capabilities**: Built-in self-evaluation and improvement
+- **Cost-Efficient**: Optimized for Groq's competitive pricing ($0.0007/1K tokens)
+- **Rate-Limited Design**: Respects Groq's limits (30 RPM, 1000 RPD)
 
 ## Quick Start
 
@@ -33,15 +35,26 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-3. Basic usage:
+3. Set up your environment variables:
+```bash
+# Create a .env file with:
+GROQ_API_KEY=your_api_key_here
+```
+
+4. Basic usage:
 ```python
-from assemble_ai import AssembleAI
+from src.main import setup_agents, process_task
 
 # Initialize the system
-ai_team = AssembleAI()
+agents = setup_agents()
 
-# Execute a task
-result = ai_team.execute_task("Research weather APIs")
+# Example task
+task = {
+    "description": "Research and plan implementation for a weather API integration"
+}
+
+# Process the task
+result = await process_task(task, agents)
 ```
 
 ## Project Structure
@@ -49,7 +62,10 @@ result = ai_team.execute_task("Research weather APIs")
 ```
 AssembleAI/
 ├── src/
-│   ├── agents/          # Agent implementations
+│   ├── agents/          # Specialized agent implementations
+│   │   ├── adaptive_learning.py   # Learning capabilities
+│   │   ├── reflection_mixin.py    # Self-improvement features
+│   │   └── ...
 │   ├── tools/          # Shared tools and utilities
 │   ├── memory/         # Shared memory system
 │   └── utils/          # Helper functions
@@ -60,25 +76,43 @@ AssembleAI/
 
 ## Technologies Used
 
-- LangChain for agent orchestration
-- Google Gemini Pro for AI processing
-- Async operations for performance
-- Shared memory system for collaboration
+- **LangChain**: For agent orchestration and chaining
+- **Groq**: Ultra-fast LLM inference with `llama-3.3-70b-versatile`
+- **Async Operations**: For optimal performance
+- **Adaptive Learning**: Custom implementation for continuous improvement
+- **Cost Monitoring**: Built-in usage tracking and optimization
+
+## Advanced Features
+
+### Adaptive Learning
+- Learns from past interactions
+- Improves response quality over time
+- Maintains a performance metrics database
+
+### Reflection System
+- Self-evaluates performance
+- Identifies improvement areas
+- Suggests optimization strategies
+
+### Cost Management
+- Tracks token usage
+- Monitors API costs
+- Optimizes for efficiency
 
 ## Performance
 
-- Task completion: 74-85 seconds average
-- Comprehensive analysis and planning
-- Automated implementation
-- Built-in quality validation
+- **Processing Speed**: Leverages Groq's ultra-fast inference
+- **Cost Efficiency**: Optimized token usage
+- **Quality Assurance**: Built-in validation at every step
+- **Scalability**: Designed for high-throughput operations
 
 ## Contributing
 
-We welcome contributions! Together, we're stronger. See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ## License
 
 MIT License - See [LICENSE](LICENSE) for details.
 
 ---
-*"AI Agents, Assemble!"*
+*"Assembling AI Agents at the Speed of Groq!"*

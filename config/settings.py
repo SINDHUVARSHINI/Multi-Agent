@@ -1,48 +1,28 @@
+"""Configuration settings for the multi-agent system"""
 import os
-from typing import Dict, Any
-from dotenv import load_dotenv # type: ignore
+from dotenv import load_dotenv # type: ignore [reportMissingImports]
 
-# Load environment variables
+# Load environment variables from .env file
 load_dotenv()
 
-# Google AI Configuration
-GOOGLE_CONFIG = {
-    "api_key": os.getenv("GOOGLE_API_KEY"),
-    "model_name": "models/gemini-2.5-pro",
-    "temperature": 0.7
+GROQ_CONFIG = {
+    "api_key": os.getenv("GROQ_API_KEY"),  # Get API key from environment variable
+    "model": "llama-3.3-70b-versatile",  # High-performance model with fast inference
+    "temperature": 0.7,
+    "max_tokens": 4000,
+    "top_p": 0.95,
+    "request_timeout": 45,  # Timeout in seconds
 }
 
-# Agent Configuration
-AGENT_CONFIG = {
-    "task_manager": {
-        "name": "TaskManager",
-        "description": "Coordinates tasks between agents"
-    },
+SYSTEM_CONFIG = {
     "research": {
-        "name": "ResearchAgent",
-        "description": "Gathers and analyzes information"
+        "max_retries": 2,  # Reduced for faster error recovery
+        "timeout": 45,  # Adjusted timeout
+        "confidence_threshold": 0.7
     },
     "planning": {
-        "name": "PlanningAgent",
-        "description": "Creates execution plans"
-    },
-    "implementation": {
-        "name": "ImplementationAgent",
-        "description": "Executes planned tasks"
-    },
-    "qa": {
-        "name": "QAAgent",
-        "description": "Validates results"
+        "max_retries": 2,  # Reduced for faster error recovery
+        "timeout": 45,  # Adjusted timeout
+        "confidence_threshold": 0.7
     }
-}
-
-# System Configuration
-SYSTEM_CONFIG = {
-    "max_retries": 3,
-    "timeout": 30,  # seconds
-    "debug_mode": True
-}
-
-def get_agent_config(agent_type: str) -> Dict[str, Any]:
-    """Get configuration for a specific agent type"""
-    return AGENT_CONFIG.get(agent_type, {}) 
+} 

@@ -1,94 +1,103 @@
-from typing import Dict, Any, List
-from .base_agent import BaseAgent
-from langchain_google_genai import ChatGoogleGenerativeAI # type: ignore [import-untyped]
-from langchain.schema import HumanMessage, SystemMessage # type: ignore [import-untyped]
+from typing import Dict, Any
+from langchain_core.language_models.chat_models import BaseChatModel # type: ignore [reportUnknownParameterType]
 
-class ResearchAgent(BaseAgent):
-    """Agent responsible for gathering and analyzing information"""
+class ResearchAgent:
+    """Agent responsible for researching and analyzing tasks"""
     
-    def __init__(self, name: str = "ResearchAgent", google_api_key: str = None): # type: ignore
-        super().__init__(name)
-        self.llm = ChatGoogleGenerativeAI(
-            model="models/gemini-2.5-pro",
-            google_api_key=google_api_key,
-            temperature=0.7
-        )
-        
+    def __init__(self, llm: BaseChatModel):
+        self.llm = llm
+    
     async def process(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """Process a research task"""
-        self.update_state(status="working", current_task=task)
-        
         try:
-            # Extract relevant information from task
+            print("\n📚 Research Agent:")
+            print("- Reading task description")
+            
+            # Extract task description
             description = task.get("description", "")
+            if not description:
+                raise ValueError("Task description is required")
             
-            # Prepare research query
-            research_query = self._prepare_research_query(description)
+            print("- Formulating research strategy")
+            # Prepare the research prompt
+            research_prompt = f"""
+            Task: {description}
             
-            # Gather information using LLM
-            research_results = await self._gather_information(research_query)
+            Please provide a detailed analysis in the following structure:
+
+            SUMMARY:
+            [Provide a brief executive summary of your findings]
+
+            ANALYSIS:
+            [Detailed analysis of available options]
+
+            RECOMMENDATIONS:
+            [Clear recommendations with justification]
+
+            CONSIDERATIONS:
+            [Important factors to consider during implementation]
+
+            Format your response using these exact section headers.
+            Make sure each section starts with the exact header followed by a colon.
+            """
             
-            # Analyze gathered information
-            analysis = await self._analyze_information(research_results)
+            print("- Conducting analysis")
+            # Get analysis from LLM
+            response = await self.llm.ainvoke(research_prompt)
             
-            # Prepare final results
-            result = {
+            print("- Organizing findings")
+            # Parse sections from the response
+            sections = self._parse_sections(str(response.content))
+            
+            # Structure the results
+            analysis = {
+                "summary": sections.get("SUMMARY", "No summary available"),
+                "detailed_analysis": sections.get("ANALYSIS", "No analysis available"),
+                "recommendations": sections.get("RECOMMENDATIONS", "No recommendations available"),
+                "considerations": sections.get("CONSIDERATIONS", "No considerations available"),
+                "confidence": 0.85,  # Example confidence score
+                "timestamp": "2024-03-20T10:30:00Z"  # Example timestamp
+            }
+            
+            print("✨ Research complete")
+            return {
                 "status": "completed",
-                "research_query": research_query,
-                "raw_results": research_results,
                 "analysis": analysis
             }
             
-            self.update_state(status="idle", current_task=None)
-            return result
-            
         except Exception as e:
-            self.update_state(status="error", current_task=None)
-            raise
-            
-    def _prepare_research_query(self, description: str) -> str:
-        """Prepare a research query from task description"""
-        return f"Research and analyze: {description}"
-        
-    async def _gather_information(self, query: str) -> List[Dict[str, Any]]:
-        """Gather information using LLM"""
-        # Combine system and human messages into a single human message
-        combined_prompt = f"""You are a research assistant tasked with gathering comprehensive information.
+            print(f"❌ Research failed: {str(e)}")
+            return {
+                "status": "error",
+                "message": str(e)
+            }
 
-Query: {query}
+    def _parse_sections(self, content: str) -> Dict[str, str]:
+        """Parse sections from the LLM response"""
+        sections = {}
+        current_section = None
+        current_content = []
 
-Please provide detailed, well-structured information addressing all aspects of the query."""
+        # Initialize sections with default values
+        for section in ["SUMMARY", "ANALYSIS", "RECOMMENDATIONS", "CONSIDERATIONS"]:
+            sections[section] = "No content available"
 
-        messages = [HumanMessage(content=combined_prompt)]
-        
-        response = await self.llm.agenerate([messages])
-        
-        return [{
-            "source": "LLM",
-            "content": response.generations[0][0].text,
-            "confidence": 0.8
-        }]
-        
-    async def _analyze_information(self, research_results: List[Dict[str, Any]]) -> Dict[str, Any]:
-        """Analyze gathered information"""
-        combined_results = "\n".join(
-            result["content"] for result in research_results
-        )
-        
-        # Combine system and human messages into a single human message
-        combined_prompt = f"""You are an analyst tasked with extracting key insights from research data.
+        for line in content.split('\n'):
+            line = line.strip()
+            if line.endswith(':') and line[:-1] in [
+                "SUMMARY",
+                "ANALYSIS",
+                "RECOMMENDATIONS",
+                "CONSIDERATIONS"
+            ]:
+                if current_section:
+                    sections[current_section] = '\n'.join(current_content).strip()
+                current_section = line[:-1]
+                current_content = []
+            elif current_section and line:
+                current_content.append(line)
 
-Research Results:
-{combined_results}
+        if current_section and current_content:
+            sections[current_section] = '\n'.join(current_content).strip()
 
-Please analyze these results and provide key insights in a clear, structured format."""
-
-        messages = [HumanMessage(content=combined_prompt)]
-        
-        response = await self.llm.agenerate([messages])
-        
-        return {
-            "key_insights": response.generations[0][0].text.split("\n"),
-            "confidence_score": 0.8,
-            "analysis_method": "LLM-based semantic analysis"
-        } 
+        return sections 

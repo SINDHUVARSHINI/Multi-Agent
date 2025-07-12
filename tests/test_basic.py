@@ -7,19 +7,19 @@ from typing import Dict, Any
 # Add project root to Python path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.agents.task_manager import TaskManagerAgent
-from src.agents.research_agent import ResearchAgent
-from src.agents.planning_agent import PlanningAgent
-from src.utils.helpers import validate_task_result, calculate_task_metrics
+from src.agents.task_manager import TaskManagerAgent # type: ignore [reportUnknownMemberType]
+from src.agents.research_agent import ResearchAgent # type: ignore [reportUnknownMemberType]
+from src.agents.planning_agent import PlanningAgent # type: ignore [reportUnknownMemberType]
+from src.utils.helpers import validate_task_result, calculate_task_metrics # type: ignore [reportUnknownMemberType]
 
 @pytest.fixture
-async def task_manager():
+async def task_manager(): # type: ignore [reportUnknownReturnType]
     """Fixture to create a configured TaskManagerAgent"""
     manager = TaskManagerAgent()
     
     # Create and register test agents
-    research_agent = ResearchAgent(name="TestResearchAgent")
-    planning_agent = PlanningAgent(name="TestPlanningAgent")
+    research_agent = ResearchAgent(name="TestResearchAgent") # type: ignore [reportUnknownParameterType]
+    planning_agent = PlanningAgent(name="TestPlanningAgent") # type: ignore [reportUnknownParameterType]
     
     manager.register_agent(research_agent)
     manager.register_agent(planning_agent)
@@ -27,7 +27,7 @@ async def task_manager():
     return manager
 
 @pytest.mark.asyncio
-async def test_task_manager_initialization(task_manager):
+async def test_task_manager_initialization(task_manager): # type: ignore [reportUnknownReturnType]
     """Test that TaskManager initializes correctly"""
     assert isinstance(task_manager, TaskManagerAgent)
     assert len(task_manager.agent_pool) == 2 # type: ignore [reportUnknownMemberType]
@@ -35,7 +35,7 @@ async def test_task_manager_initialization(task_manager):
     assert "TestPlanningAgent" in task_manager.agent_pool # type: ignore [reportUnknownMemberType]
 
 @pytest.mark.asyncio
-async def test_basic_task_processing(task_manager):
+async def test_basic_task_processing(task_manager): # type: ignore [reportUnknownReturnType]
     """Test processing a basic task"""
     task = {
         "description": "Test task for basic processing",
@@ -56,7 +56,7 @@ async def test_basic_task_processing(task_manager):
     assert "complexity_score" in metrics
 
 @pytest.mark.asyncio
-async def test_error_handling(task_manager):
+async def test_error_handling(task_manager): # type: ignore [reportUnknownReturnType]
     """Test error handling for invalid tasks"""
     invalid_task = {}  # Empty task should cause an error
     
@@ -64,7 +64,7 @@ async def test_error_handling(task_manager):
         await task_manager.process(invalid_task)
 
 @pytest.mark.asyncio
-async def test_agent_state_management(task_manager):
+async def test_agent_state_management(task_manager): # type: ignore [reportUnknownReturnType]
     """Test agent state management during task processing"""
     task = {
         "description": "Test task for state management",
@@ -92,7 +92,7 @@ async def test_agent_state_management(task_manager):
         assert final_states[name] == "idle"    # Should end idle
 
 @pytest.mark.asyncio
-async def test_task_breakdown(task_manager):
+async def test_task_breakdown(task_manager): # type: ignore [reportUnknownReturnType]               
     """Test that tasks are properly broken down into subtasks"""
     task = {
         "description": "Complex task requiring multiple agents",

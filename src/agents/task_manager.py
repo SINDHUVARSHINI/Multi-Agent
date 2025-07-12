@@ -1,122 +1,79 @@
-from typing import Dict, Any, List
-from .base_agent import BaseAgent
-import asyncio
+from typing import Dict, Any
+from .research_agent import ResearchAgent
+from .planning_agent import PlanningAgent
 
-class TaskManagerAgent(BaseAgent):
-    """Agent responsible for coordinating other agents"""
+class TaskManager:
+    """Manages task distribution and coordination between agents"""
     
-    def __init__(self, name: str = "TaskManager"):
-        super().__init__(name)
-        self.agents: List[BaseAgent] = []
-        
-    def register_agent(self, agent: BaseAgent) -> None:
-        """Register an agent with the task manager"""
-        self.agents.append(agent)
-        
-    async def process(self, task: Dict[str, Any], timeout: int = 120) -> Dict[str, Any]:
-        """Process a task by coordinating multiple agents"""
-        self.update_state(status="working", current_task=task)
-        
+    def __init__(self, research_agent: ResearchAgent, planning_agent: PlanningAgent):
+        self.research_agent = research_agent
+        self.planning_agent = planning_agent
+    
+    async def process_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
+        """Process a task through the multi-agent system"""
         try:
-            # Create tasks for all agents
-            tasks = []
-            for i, agent in enumerate(self.agents):
-                print(f"  🔄 Starting {agent.__class__.__name__}...")
-                tasks.append(asyncio.create_task(agent.process(task)))
+            # Step 1: Research phase
+            print("\n🔍 Starting research phase...")
+            print("- Analyzing requirements")
+            print("- Gathering information")
+            print("- Evaluating options")
+            research_results = await self.research_agent.process(task)
             
-            # Wait for all tasks with timeout
-            print("  ⏳ Waiting for agent responses (timeout:", timeout, "seconds)...")
-            results = await asyncio.wait_for(asyncio.gather(*tasks), timeout=timeout)
-            print("  ✓ All agents completed successfully")
+            if research_results["status"] != "completed":
+                print("❌ Research phase failed")
+                return {
+                    "status": "error",
+                    "message": "Research phase failed",
+                    "details": research_results
+                }
             
-            # Combine results with better error handling
-            combined_results = {
+            print("✅ Research phase completed successfully")
+            
+            # Step 2: Planning phase
+            print("\n📋 Starting planning phase...")
+            print("- Creating implementation plan")
+            print("- Defining technical specifications")
+            print("- Estimating timeline")
+            
+            # Prepare planning task with complete research results
+            planning_task = {
+                **task,
+                "research_results": {
+                    "summary": research_results["analysis"]["summary"],
+                    "detailed_analysis": research_results["analysis"]["detailed_analysis"],
+                    "recommendations": research_results["analysis"]["recommendations"],
+                    "considerations": research_results["analysis"]["considerations"]
+                }
+            }
+            
+            planning_results = await self.planning_agent.process(planning_task)
+            
+            if planning_results["status"] != "completed":
+                print("❌ Planning phase failed")
+                return {
+                    "status": "error",
+                    "message": "Planning phase failed",
+                    "details": planning_results
+                }
+            
+            print("✅ Planning phase completed successfully")
+            
+            # Step 3: Combine results
+            print("\n🎯 Finalizing results...")
+            return {
                 "status": "completed",
-                "research_results": {},
-                "plan": {}
+                "research_phase": research_results,
+                "planning_phase": planning_results,
+                "confidence_scores": {
+                    "research": research_results["analysis"]["confidence"],
+                    "planning": planning_results["confidence_scores"]["plan"]
+                }
             }
             
-            for result in results:
-                if isinstance(result, dict):
-                    if "research_query" in result:
-                        combined_results["research_results"] = result
-                    elif "plan" in result:
-                        combined_results["plan"] = result.get("plan", {})
-            
-            # Validate results
-            if not combined_results["research_results"]:
-                print("  ⚠️ Warning: No research results available")
-            if not combined_results["plan"]:
-                print("  ⚠️ Warning: No planning results available")
-            
-            self.update_state(status="idle", current_task=None)
-            return combined_results
-            
-        except asyncio.TimeoutError:
-            print(f"\n  ⚠️ Task timed out after {timeout} seconds")
-            print("  💡 Tip: Try increasing the timeout or simplifying the task")
-            self.update_state(status="error", current_task=None)
-            return {
-                "status": "error",
-                "message": f"Task timed out after {timeout} seconds"
-            }
         except Exception as e:
-            print(f"\n  ❌ Error: {str(e)}")
-            self.update_state(status="error", current_task=None)
+            print(f"\n❌ Error occurred: {str(e)}")
             return {
                 "status": "error",
-                "message": str(e)
-            }
-            
-    def _break_down_task(self, task: Dict[str, Any]) -> List[Dict[str, Any]]:
-        """Break down a complex task into subtasks"""
-        # This is a simplified version - in practice, you'd want more sophisticated
-        # task decomposition logic based on task type, complexity, etc.
-        return [
-            {
-                "type": "research",
-                "description": f"Research information for {task.get('description', '')}"
-            },
-            {
-                "type": "planning",
-                "description": f"Create execution plan for {task.get('description', '')}"
-            },
-            {
-                "type": "implementation",
-                "description": f"Implement solution for {task.get('description', '')}"
-            },
-            {
-                "type": "qa",
-                "description": f"Validate results for {task.get('description', '')}"
-            }
-        ]
-        
-    def _select_agent_for_task(self, task: Dict[str, Any]) -> str:
-        """Select the most appropriate agent for a task"""
-        # Simple mapping of task types to agent names
-        task_to_agent = {
-            "research": "ResearchAgent",
-            "planning": "PlanningAgent",
-            "implementation": "ImplementationAgent",
-            "qa": "QAAgent"
-        }
-        
-        task_type = task.get("type")
-        if task_type not in task_to_agent:
-            raise ValueError(f"No agent available for task type: {task_type}")
-            
-        agent_name = task_to_agent[task_type]
-        if agent_name not in self.agent_pool: # type: ignore [reportUnknownMemberType]
-            raise ValueError(f"Required agent {agent_name} not found in pool")
-            
-        return agent_name
-        
-    def _combine_results(self, results: List[Dict[str, Any]]) -> Dict[str, Any]:
-        """Combine results from multiple subtasks"""
-        # This is a simplified version - in practice, you'd want more sophisticated
-        # result combination logic based on task type, dependencies, etc.
-        return {
-            "status": "completed",
-            "subtask_results": results,
-            "summary": "Combined results from all subtasks"
-        } 
+                "message": str(e),
+                "details": None
+            } 
