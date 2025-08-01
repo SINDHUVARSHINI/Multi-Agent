@@ -1,26 +1,83 @@
+"""
+Planning Agent Implementation
+--------------------------
+This module implements the Planning Agent, responsible for creating detailed
+implementation plans based on research findings. It transforms analysis into
+actionable steps with technical specifications and risk assessments.
+
+Key Capabilities:
+- Research interpretation
+- Implementation planning
+- Technical specification generation
+- Timeline estimation
+- Risk assessment and mitigation
+"""
+
+# 1. IMPORTS AND DEPENDENCIES
+# ------------------------
 from typing import Dict, Any
 from langchain_core.language_models.chat_models import BaseChatModel # type: ignore [reportUnknownParameterType]
 
+# 2. PLANNING AGENT DEFINITION
+# -------------------------
 class PlanningAgent:
-    """Agent responsible for creating implementation plans"""
+    """
+    Agent responsible for creating comprehensive implementation plans.
+    
+    Features:
+    - Research result interpretation
+    - Detailed plan generation
+    - Technical specification creation
+    - Timeline estimation
+    - Resource identification
+    - Risk assessment
+    
+    Output Sections:
+    - Implementation Plan: Step-by-step guide
+    - Technical Specifications: System requirements
+    - Timeline: Project milestones
+    - Resources: Required tools and dependencies
+    - Risks and Mitigations: Risk management strategy
+    """
     
     def __init__(self, llm: BaseChatModel):
+        """
+        Initialize Planning Agent with LLM model.
+        
+        Args:
+            llm: LangChain chat model for plan generation
+        """
         self.llm = llm
     
+    # 3. TASK PROCESSING IMPLEMENTATION
+    # ------------------------------
     async def process(self, task: Dict[str, Any]) -> Dict[str, Any]:
-        """Process a planning task"""
+        """
+        Process a planning task and generate implementation details.
+        
+        Args:
+            task: Dictionary containing task description and research results
+            
+        Returns:
+            Dict containing implementation plan or error information
+            
+        Raises:
+            ValueError: If required information is missing
+        """
         try:
             print("\n📝 Planning Agent:")
             print("- Reviewing research findings")
             
-            # Extract task info and research results
+            # 4. INPUT VALIDATION AND PREPARATION
+            # --------------------------------
             description = task.get("description", "")
             research_results = task.get("research_results", {})
             if not description or not research_results:
                 raise ValueError("Task description and research results are required")
             
+            # 5. PLAN GENERATION
+            # ---------------
             print("- Creating implementation plan")
-            # Prepare the planning prompt
             planning_prompt = f"""
             Task: {description}
             
@@ -50,15 +107,16 @@ class PlanningAgent:
             Make each section comprehensive and immediately actionable.
             """
             
+            # 6. LLM INTERACTION AND PROCESSING
+            # ------------------------------
             print("- Generating technical specifications")
-            # Get plan from LLM
             response = await self.llm.ainvoke(planning_prompt)
             
             print("- Estimating timeline")
-            # Parse sections from the response
             sections = self._parse_sections(str(response.content))
             
-            # Structure the results
+            # 7. RESULT STRUCTURING
+            # ------------------
             implementation_plan = {
                 "plan": sections.get("IMPLEMENTATION_PLAN", "No implementation plan available"),
                 "technical_specifications": {
@@ -76,7 +134,7 @@ class PlanningAgent:
                 "status": "completed",
                 "implementation_plan": implementation_plan,
                 "confidence_scores": {
-                    "plan": 0.9  # Example confidence score
+                    "plan": 0.9  # Confidence scoring
                 }
             }
             
@@ -87,8 +145,24 @@ class PlanningAgent:
                 "message": str(e)
             }
 
+    # 8. RESPONSE PARSING
+    # ----------------
     def _parse_sections(self, content: str) -> Dict[str, str]:
-        """Parse sections from the LLM response"""
+        """
+        Parse and organize sections from LLM response.
+        
+        Args:
+            content: Raw LLM response text
+            
+        Returns:
+            Dictionary of parsed sections with standardized format
+            
+        Features:
+        - Section identification
+        - Content aggregation
+        - Default value handling
+        - Structured output
+        """
         sections = {}
         current_section = None
         current_content = []
@@ -103,6 +177,7 @@ class PlanningAgent:
         ]:
             sections[section] = "No content available"
 
+        # Parse content into sections
         for line in content.split('\n'):
             line = line.strip()
             if line.startswith('## ') and ':' in line:
@@ -115,6 +190,7 @@ class PlanningAgent:
             elif current_section and line:
                 current_content.append(line)
 
+        # Handle final section
         if current_section and current_content:
             sections[current_section] = '\n'.join(current_content).strip()
 

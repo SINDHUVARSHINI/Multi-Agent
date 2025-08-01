@@ -2,9 +2,16 @@ from typing import Dict, Any
 from .research_agent import ResearchAgent
 from .planning_agent import PlanningAgent
 
+#####################################
+# Task Manager - Multi-Agent Coordinator
+#####################################
+
 class TaskManager:
     """Manages task distribution and coordination between agents"""
     
+    #####################################
+    # Initialization
+    #####################################
     def __init__(self, research_agent: ResearchAgent, planning_agent: PlanningAgent):
         self.research_agent = research_agent
         self.planning_agent = planning_agent
@@ -12,7 +19,9 @@ class TaskManager:
     async def process_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """Process a task through the multi-agent system"""
         try:
-            # Step 1: Research phase
+            #####################################
+            # Step 1: Research Phase
+            #####################################
             print("\n🔍 Starting research phase...")
             print("- Analyzing requirements")
             print("- Gathering information")
@@ -29,7 +38,9 @@ class TaskManager:
             
             print("✅ Research phase completed successfully")
             
-            # Step 2: Planning phase
+            #####################################
+            # Step 2: Planning Phase
+            #####################################
             print("\n📋 Starting planning phase...")
             print("- Creating implementation plan")
             print("- Defining technical specifications")
@@ -58,7 +69,9 @@ class TaskManager:
             
             print("✅ Planning phase completed successfully")
             
-            # Step 3: Combine results
+            #####################################
+            # Step 3: Results Compilation
+            #####################################
             print("\n🎯 Finalizing results...")
             return {
                 "status": "completed",
@@ -70,6 +83,9 @@ class TaskManager:
                 }
             }
             
+        #####################################
+        # Error Handling
+        #####################################
         except Exception as e:
             print(f"\n❌ Error occurred: {str(e)}")
             return {

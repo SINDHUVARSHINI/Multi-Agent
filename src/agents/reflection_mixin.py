@@ -2,6 +2,10 @@ from typing import Dict, Any, List, Optional
 from pydantic import BaseModel, Field # type: ignore
 import time
 
+#####################################
+# Data Models
+#####################################
+
 class ReflectionLog(BaseModel):
     """Model for storing reflection data"""
     timestamp: float
@@ -13,9 +17,16 @@ class ReflectionLog(BaseModel):
     confidence: float
     improvement_suggestions: List[str] = Field(default_factory=list)
 
+#####################################
+# Reflection Mixin Class
+#####################################
+
 class ReflectionMixin:
     """Mixin to add self-reflection capabilities to agents"""
     
+    #####################################
+    # Initialization
+    #####################################
     def __init__(self):
         self.reflection_logs: List[ReflectionLog] = []
         self.performance_metrics: Dict[str, float] = {
@@ -24,6 +35,9 @@ class ReflectionMixin:
             "tasks_completed": 0
         }
     
+    #####################################
+    # Core Reflection Methods
+    #####################################
     def reflect_on_action(self, action: str, outcome: Dict[str, Any], success: bool = True, error: Optional[str] = None) -> None:
         """Record and analyze an action's outcome"""
         reflection = self._analyze_outcome(action, outcome, success, error)
@@ -59,6 +73,9 @@ class ReflectionMixin:
             improvement_suggestions=improvement_suggestions
         )
     
+    #####################################
+    # Performance Metrics
+    #####################################
     def _update_metrics(self, reflection: ReflectionLog) -> None:
         """Update performance metrics based on reflection"""
         self.performance_metrics["tasks_completed"] += 1
@@ -74,6 +91,9 @@ class ReflectionMixin:
         new_avg_confidence = ((current_avg_confidence * (total_tasks - 1)) + reflection.confidence) / total_tasks
         self.performance_metrics["average_confidence"] = new_avg_confidence
     
+    #####################################
+    # Improvement Analysis
+    #####################################
     def _trigger_improvement_analysis(self, reflection: ReflectionLog) -> None:
         """Analyze failures and low confidence outcomes"""
         if not reflection.success:
@@ -98,6 +118,9 @@ class ReflectionMixin:
             "Add verification steps for uncertain outcomes"
         ])
     
+    #####################################
+    # Error Handling & Suggestions
+    #####################################
     def _categorize_error(self, error: Optional[str]) -> str:
         """Categorize error types"""
         if not error:

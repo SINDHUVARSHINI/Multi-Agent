@@ -4,6 +4,10 @@ import time
 import json
 from pathlib import Path
 
+#####################################
+# Learning Data Model
+#####################################
+
 class LearningExample(BaseModel):
     """Model for storing learning examples"""
     input_data: Dict[str, Any]
@@ -12,9 +16,16 @@ class LearningExample(BaseModel):
     timestamp: float
     tags: List[str] = Field(default_factory=list)
 
+#####################################
+# Adaptive Learning Mixin
+#####################################
+
 class AdaptiveLearningMixin:
     """Mixin to add adaptive learning capabilities to agents"""
     
+    #####################################
+    # Initialization & Storage
+    #####################################
     def __init__(self, learning_path: str = "data/learning"):
         self.learning_path = Path(learning_path)
         self.learning_path.mkdir(parents=True, exist_ok=True)
@@ -25,7 +36,7 @@ class AdaptiveLearningMixin:
     def _load_examples(self) -> List[LearningExample]:
         """Load learning examples from disk"""
         examples = []
-        if (self.learning_path / "examples.json").exists():
+        if (self.learning_path / "examples.json").exists(): # type: ignore
             with open(self.learning_path / "examples.json", "r") as f:
                 data = json.load(f)
                 for item in data:
@@ -37,6 +48,9 @@ class AdaptiveLearningMixin:
         with open(self.learning_path / "examples.json", "w") as f:
             json.dump([example.dict() for example in self.examples], f, indent=2)
     
+    #####################################
+    # Learning & Adaptation
+    #####################################
     def add_learning_example(self, input_data: Dict[str, Any], output_data: Dict[str, Any], 
                            performance_metrics: Dict[str, float], tags: List[str]) -> None:
         """Add a new learning example"""
@@ -59,6 +73,9 @@ class AdaptiveLearningMixin:
             self.performance_threshold = (1 - self.adaptation_rate) * self.performance_threshold + \
                                       self.adaptation_rate * avg_performance
     
+    #####################################
+    # Example Retrieval & Similarity
+    #####################################
     def find_similar_examples(self, query: Dict[str, Any], top_k: int = 3) -> List[Tuple[LearningExample, float]]:
         """Find similar examples to the query"""
         if not self.examples:
@@ -87,6 +104,9 @@ class AdaptiveLearningMixin:
         
         return similarity_score / len(shared_keys)
     
+    #####################################
+    # Performance Analysis & Insights
+    #####################################
     def get_performance_stats(self) -> Dict[str, float]:
         """Get performance statistics"""
         if not self.examples:
